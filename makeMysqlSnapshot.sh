@@ -18,6 +18,18 @@
 # * Only notifies you if there is a problem and outpouts a log.
 # * Retires snapshots older than a week.
 # * Put it in cron to run daily.
+# * Maintains a log.
+# * Retires backups older than 7 days.
+# * Does not send emails unless there is a problem.
+# * Sends an email if the target is running out of space.
+# * Sends an email if there is no snapshot for the previous day.
+# * Sends an email if there is already a snapshot for today.
+# * Dumps a startSlave.sql file in the tarball with the correct CHANGE MASTER
+#   statement to start the snapshot up.
+# * Dumps the backup slave's my.cnf in the tarball for reference.
+# * Compares today's snapshot size to the previous day's snapshot and warns if
+#   there is a size difference greater than 3%.
+
 
 # Script presumes that:
 # * Database is in /var/lib/mysql

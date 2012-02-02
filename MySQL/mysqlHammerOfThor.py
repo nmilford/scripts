@@ -84,14 +84,14 @@ if '__main__' == __name__:
    if opts.host:
       # BTW, This will kill your own connecton to the server if the wildcard matches your own host.
       print "Killing all queries from hosts matching *%s*" % opts.host
-      db = MySQLdb.connect(host=opts.server, port=myPort, user='root', passwd=myPasswd, db='information_schema')
+      db = MySQLdb.connect(host=opts.server, port=myPort, user=myUser, passwd=myPasswd, db='information_schema')
       q = getQueriesByHost(db, opts.host)
       killQueriesByID(db, q) 
       db.close()
 
    elif opts.thresh:
       print "Killing all queries running longer than %s seconds" % opts.thresh
-      db = MySQLdb.connect(host=opts.server, port=myPort, user='root', passwd=myPasswd, db='information_schema')
+      db = MySQLdb.connect(host=opts.server, port=myPort, user=myUser, passwd=myPasswd, db='information_schema')
       q = getQueriesByTime(db, opts.thresh)
       killQueriesByID(db, q) 
       db.close()

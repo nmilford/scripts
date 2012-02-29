@@ -120,6 +120,10 @@ function checkForLastSnapshot () {
 
 function compareSnapshotSizes () {
 
+   if [ ! -s $snapLast ]; then
+      echo "$(date) Previous hour's snapshot ($(hostname -s):$snapLast) does not exist! Not comparing Snapshot sizes." >> $logFile
+   fi
+
    snapNowSize=$(stat -c%s $snapNow)
    snapLastSize=$(stat -c%s $snapLast)
    percentDiff=$(echo "scale=3; ( $snapNowSize - $snapLastSize  ) / $snapLastSize  * 100"  | /usr/bin/bc -l | /bin/sed 's/\-//g')

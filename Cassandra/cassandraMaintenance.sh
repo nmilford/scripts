@@ -46,7 +46,7 @@ function runCompaction() {
 
 function runCleanup() {
    echo "$keyspace.$columnFamily cleanup started at $(date)" >> $logFile
-   nodetool -h $HOSTNAME -p $jmxPort compact $keyspace $columnFamily
+   nodetool -h $HOSTNAME -p $jmxPort cleanup $keyspace $columnFamily
    echo "$keyspace.$columnFamily cleanup completed at $(date)" >> $logFile
 }
 

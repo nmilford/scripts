@@ -54,6 +54,7 @@ if '__main__' == __name__:
    parser.add_option('-u', '--user', help='User that can kill queries (default: root).', dest='user', default=False, action='store')
    parser.add_option('-w', '--wildcard', help='Kills all queries from any host matching a wildcard string.', dest='host', default=False, action='store')
    parser.add_option('-t', '--threshold', help='Kills all queries that have been running longer than this value in seconds.', dest='thresh', default=False, action='store')
+   parser.add_option('-S', '--socket', help='The socket file to use for connection.', dest='socket', default=False, action='store')
 
    (opts, args) = parser.parse_args()
 
@@ -75,6 +76,11 @@ if '__main__' == __name__:
    else:
       myUser = opts.user 
 
+   if not opts.socket:
+      socket = "/var/lib/mysql/mysql.sock"
+   else:
+      socket = opts.socket
+
    if opts.host and opts.thresh:
       print "You can only specify one kill method."
       sys.exit(1)
@@ -84,14 +90,14 @@ if '__main__' == __name__:
    if opts.host:
       # BTW, This will kill your own connecton to the server if the wildcard matches your own host.
       print "Killing all queries from hosts matching *%s*" % opts.host
-      db = MySQLdb.connect(host=opts.server, port=myPort, user=myUser, passwd=myPasswd, db='information_schema')
+      db = MySQLdb.connect(unix_socket=socket, host=opts.server, port=myPort, user=myUser, passwd=myPasswd, db='information_schema')
       q = getQueriesByHost(db, opts.host)
       killQueriesByID(db, q) 
       db.close()
 
    elif opts.thresh:
       print "Killing all queries running longer than %s seconds" % opts.thresh
-      db = MySQLdb.connect(host=opts.server, port=myPort, user=myUser, passwd=myPasswd, db='information_schema')
+      db = MySQLdb.connect(unix_socket=socket, host=opts.server, port=myPort, user=myUser, passwd=myPasswd, db='information_schema')
       q = getQueriesByTime(db, opts.thresh)
       killQueriesByID(db, q) 
       db.close()

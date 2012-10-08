@@ -1,0 +1,13 @@
+#!/bin/bash 
+usage="usage: $0 service node [ node | node | ... ]"
+if [[ -z $* ]]; then
+  echo $usage
+  exit 1
+else
+  svc=$1 ; shift
+  while [ "$1" != "" ];do
+    echo "*** Cycling $svc on $1" 
+    ssh -t -q -o StrictHostKeyChecking=no $1 "sudo /etc/init.d/$svc stop ; sleep 3 ; sudo /etc/init.d/$svc start"
+    shift
+  done
+fi

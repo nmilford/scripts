@@ -23,7 +23,7 @@ columnFamilies=(list your column families here)
 # Older Cassandra insalls use 8080, noewer ones use 7199.
 jmxPort=7199
 
-logFile="/var/log/cassandra/mainenance.log"
+logFile="/var/log/cassandra/maintenance.log"
 
 function checkForNodetool() {
    if [ ! -x /usr/bin/nodetool ]; then

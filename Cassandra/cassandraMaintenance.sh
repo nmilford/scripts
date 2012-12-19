@@ -14,77 +14,68 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-usage="usage: $0 -k <keyspace> -c [<column family> or 'all']"
-
-# Place your columnfamilies in this array seperated by a space. 
-columnFamilies=(list your column families here)
+logFile="/var/log/cassandra/mainenance.log"
 
 # Older Cassandra insalls use 8080, noewer ones use 7199.
 jmxPort=7199
 
-logFile="/var/log/cassandra/maintenance.log"
-
-function checkForNodetool() {
-   if [ ! -x /usr/bin/nodetool ]; then
-      echo "nodetool not found."
-      exit 1
-   fi
+checkForNodetool() {
+  if [ ! -x /usr/bin/nodetool ]; then
+    echo "nodetool not found."
+    exit 1
+  fi
 }
 
-function runRepair() {
-   echo "$keyspace.$columnFamily repair started at $(date)" >> $logFile
-   nodetool -h $HOSTNAME -p $jmxPort repair $keyspace $columnFamily
-   echo "$keyspace.$columnFamily repair completed at $(date)" >> $logFile
+runRepair() {
+  echo "$keyspace.$columnfamily repair started at $(date)" >> $logFile
+  nodetool -h $HOSTNAME -p $jmxPort repair $keyspace $columnfamily
+  echo "$keyspace.$columnfamily repair completed at $(date)" >> $logFile
 }
 
-function runCompaction() {
-   echo "$keyspace.$columnFamily compaction started at $(date)" >> $logFile
-   nodetool -h $HOSTNAME -p $jmxPort compact $keyspace $columnFamily
-   echo "$keyspace.$columnFamily compaction completed at $(date)" >> $logFile
+runCompaction() {
+  echo "$keyspace.$columnfamily compaction started at $(date)" >> $logFile
+  nodetool -h $HOSTNAME -p $jmxPort compact $keyspace $columnfamily
+  echo "$keyspace.$columnfamily compaction completed at $(date)" >> $logFile
 }
 
-function runCleanup() {
-   echo "$keyspace.$columnFamily cleanup started at $(date)" >> $logFile
-   nodetool -h $HOSTNAME -p $jmxPort cleanup $keyspace $columnFamily
-   echo "$keyspace.$columnFamily cleanup completed at $(date)" >> $logFile
+runCleanup() {
+  echo "$keyspace.$columnfamily cleanup started at $(date)" >> $logFile
+  nodetool -h $HOSTNAME -p $jmxPort cleanup $keyspace $columnfamily
+  echo "$keyspace.$columnfamily cleanup completed at $(date)" >> $logFile
 }
 
-function reportRuntime() {
-   S=$SECONDS
-   ((h=S/3600))
-   ((m=S%3600/60))
-   ((s=S%60))
-   echo "Total Run Time was $h:$m:$s" >> $logFile
+reportRuntime() {
+  S=$SECONDS
+  ((h=S/3600))
+  ((m=S%3600/60))
+  ((s=S%60))
+  echo "Total Run Time was $h:$m:$s" >> $logFile
 }
 
+getKeyspaces() {
+  echo "show keyspaces;" > /var/tmp/ks.cmd
+  keyspaces=( $(cassandra-cli -h $HOSTNAME -p 9160 -f /var/tmp/ks.cmd 2>&1 | grep Keyspace | grep -v 'system\|OpsCenter' | awk {' print $2 '} | sed 's/://' ) )
+  rm -f /var/tmp/ks.cmd
+}
 
-while getopts ":k:c:" options; do
-   case $options in
-      k ) keyspace=$OPTARG;;
-      c ) columnFamily=$OPTARG;;
-      * ) echo $usage
-          exit 1;;
-   esac
-done
+getColumnfamilies() {
+  echo "describe $keyspace;" > /var/tmp/cf.cmd
+  columnfamilies=( $(cassandra-cli -h $HOSTNAME -p 9160 -f /var/tmp/cf.cmd 2>&1 | grep ColumnFamily | awk {' print $2 '} | sed 's/://' ) )
+  rm -f /var/tmp/cf.cmd
+}
 
-if [[ -z $keyspace ]] || [[ -z $columnFamily ]]; then
-   echo $usage
-   exit 1
-fi
-
-if [ $columnFamily == "all" ]; then
-   for cf in "${columnFamilies[@]}"; do
-      columnFamily=$cf
+main() {
+  checkForNodetool
+  getKeyspaces
+  for keyspace in "${keyspaces[@]}"; do
+    getColumnfamilies
+    for columnfamily in "${columnfamilies[@]}"; do
       runRepair
       runCompaction
       runCleanup
       reportRuntime
-   done
-else
-   runRepair
-   runCompaction
-   runCleanup
-   reportRuntime
-fi
+    done
+  done
+}
 
+main
